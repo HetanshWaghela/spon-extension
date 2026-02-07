@@ -155,11 +155,19 @@ def collect_hidden_states(
     
     collector.remove_hooks()
     
-    # Stack
+    # Stack tensors and validate results
+    stacked_states = {}
     for key in all_hidden_states:
-        all_hidden_states[key] = torch.cat(all_hidden_states[key], dim=0)
+        if all_hidden_states[key]:  # Non-empty list
+            stacked = torch.cat(all_hidden_states[key], dim=0)
+            if not isinstance(stacked, torch.Tensor):
+                logger.warning(f"Unexpected type for hidden states key '{key}': {type(stacked)}")
+                continue
+            stacked_states[key] = stacked
+        else:
+            logger.warning(f"No hidden states collected for key '{key}'")
     
-    return all_hidden_states
+    return stacked_states
 
 
 def compute_pca_alignment(
@@ -178,13 +186,34 @@ def compute_pca_alignment(
     
     for layer_key, bias in spon_biases.items():
         if layer_key not in hidden_states:
+            logger.debug(f"Skipping PCA for '{layer_key}': not in hidden_states (available: {list(hidden_states.keys())})")
             continue
         
-        states = hidden_states[layer_key].cpu().numpy()
+        states_val = hidden_states[layer_key]
+        
+        # Defensive check: ensure we have a tensor, not a dict or other type
+        if not isinstance(states_val, torch.Tensor):
+            logger.warning(
+                f"Skipping PCA for '{layer_key}': expected Tensor but got {type(states_val).__name__}. "
+                f"This may indicate a mismatch between collector output and expected format."
+            )
+            continue
+        
+        states = states_val.cpu().numpy()
         bias_np = bias.cpu().numpy()
         
+        # Ensure sufficient samples for PCA
+        if states.shape[0] < 2:
+            logger.warning(f"Skipping PCA for '{layer_key}': only {states.shape[0]} samples (need >= 2)")
+            continue
+        
         # Fit PCA
-        pca = PCA(n_components=min(n_components, states.shape[0], states.shape[1]))
+        n_comps = min(n_components, states.shape[0] - 1, states.shape[1])
+        if n_comps < 1:
+            logger.warning(f"Skipping PCA for '{layer_key}': computed n_components={n_comps} < 1")
+            continue
+            
+        pca = PCA(n_components=n_comps)
         pca.fit(states)
         
         # Compute cosine similarity to each PC
@@ -284,8 +313,16 @@ def analyze_category_shifts(
         
         for key in dense_states:
             if key in sparse_states:
-                dense = dense_states[key].cpu().numpy()
-                sparse = sparse_states[key].cpu().numpy()
+                dense_val = dense_states[key]
+                sparse_val = sparse_states[key]
+                
+                # Defensive check: ensure tensors
+                if not isinstance(dense_val, torch.Tensor) or not isinstance(sparse_val, torch.Tensor):
+                    logger.warning(f"Skipping L2/CKA for '{key}': expected Tensors but got {type(dense_val).__name__}, {type(sparse_val).__name__}")
+                    continue
+                
+                dense = dense_val.cpu().numpy()
+                sparse = sparse_val.cpu().numpy()
                 
                 # L2 shift
                 l2 = np.linalg.norm(dense - sparse, axis=-1).mean()
