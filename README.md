@@ -11,10 +11,7 @@ This repository contains experiments extending the SPON (Spontaneous Neuron Acti
 
 ## 📚 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [EXPLANATION.md](EXPLANATION.md) | **Start here!** Beginner-friendly guide explaining every component |
-| [SPON_Extension_Research_Plan.md](../SPON_Extension_Research_Plan.md) | Full research plan with experimental design |
+The primary documentation for this repository is contained within this `README.md` and the sub-directory READMEs.
 
 ---
 
@@ -202,7 +199,6 @@ spon-extensions/
 │
 ├── test_setup.py                    # Setup verification script
 ├── requirements.txt                 # Python dependencies
-├── EXPLANATION.md                   # Detailed explanations
 └── README.md                        # This file
 ```
 
