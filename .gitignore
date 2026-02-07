@@ -1,0 +1,27 @@
+# Environment
+venv/
+env/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Results and Experiments
+results/
+experiments/*/outputs/
+experiments/*/checkpoints/
+
+# System
+.DS_Store
+.vscode/
+.idea/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Documentation
+*.md
+!README.md

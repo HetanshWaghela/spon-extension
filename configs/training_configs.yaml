@@ -1,0 +1,67 @@
+# SPON Training Configurations
+
+training:
+  # Optimization
+  optimizer: "adamw"
+  learning_rate: 1.0e-5
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  
+  # Training schedule
+  epochs: 10
+  batch_size: 8
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  
+  # Calibration data
+  calibration_dataset: "wikitext"
+  calibration_subset: "wikitext-2-raw-v1"
+  calibration_split: "train"
+  eval_split: "test"
+  block_size: 128
+  num_calibration_samples: 1024
+  
+  # KL divergence settings
+  kl_temperature: 1.0
+  kl_reduction: "batchmean"
+
+evaluation:
+  # Metrics
+  metrics: ["perplexity", "accuracy"]
+  
+  # Datasets for quick eval
+  quick_eval_datasets:
+    - name: "wikitext"
+      subset: "wikitext-2-raw-v1"
+      split: "test"
+      
+  # Full eval with lm-eval-harness
+  harness_tasks:
+    - "mmlu"
+    - "arc_easy"
+    - "arc_challenge"
+    - "hellaswag"
+    - "truthfulqa_mc"
+    - "gsm8k"
+    - "winogrande"
+
+sparsity:
+  method: "teal"  # magnitude-based thresholding
+  levels: [0.5, 0.6, 0.7]
+  apply_to: ["mlp"]  # Following TEAL, sparsify MLP activations
+
+hardware:
+  # Expected hardware
+  gpus: 4
+  gpu_type: "A6000"
+  mixed_precision: "bf16"
+  
+  # Memory optimization
+  gradient_checkpointing: true
+  cpu_offload: false
+
+logging:
+  wandb_project: "spon-extensions"
+  log_interval: 10
+  eval_interval: 100
+  save_interval: 500

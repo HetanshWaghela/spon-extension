@@ -1,0 +1,52 @@
+# =============================================================================
+# SPON Extensions Dependencies
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Core ML Dependencies
+# -----------------------------------------------------------------------------
+torch>=2.0.0              # PyTorch (use CUDA version for GPU support)
+transformers>=4.36.0      # HuggingFace Transformers for LLaMA models
+datasets>=2.14.0          # HuggingFace Datasets for WikiText
+accelerate>=0.24.0        # Distributed training utilities
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+lm-eval>=0.4.0            # Language Model Evaluation Harness
+
+# -----------------------------------------------------------------------------
+# Interpretability (optional - uncomment if needed)
+# -----------------------------------------------------------------------------
+# sae-lens>=0.1.0         # Sparse Autoencoders for mechanistic interpretability
+# transformer-lens>=1.0.0 # TransformerLens for circuit analysis
+
+# -----------------------------------------------------------------------------
+# Visualization
+# -----------------------------------------------------------------------------
+matplotlib>=3.7.0         # Core plotting
+seaborn>=0.12.0          # Statistical visualizations
+plotly>=5.15.0           # Interactive plots
+# umap-learn>=0.5.0      # UMAP dimensionality reduction (optional)
+
+# -----------------------------------------------------------------------------
+# Analysis & Statistics
+# -----------------------------------------------------------------------------
+scikit-learn>=1.3.0      # ML utilities, PCA, clustering
+scipy>=1.11.0            # Statistical tests (t-test, etc.)
+numpy>=1.24.0            # Numerical computing
+pandas>=2.0.0            # Data manipulation (for result analysis)
+
+# -----------------------------------------------------------------------------
+# Configuration & Utilities
+# -----------------------------------------------------------------------------
+pyyaml>=6.0              # YAML config parsing
+tqdm>=4.65.0             # Progress bars
+
+# -----------------------------------------------------------------------------
+# Development (optional - for contributors)
+# -----------------------------------------------------------------------------
+# black>=23.0.0          # Code formatting
+# isort>=5.12.0          # Import sorting
+# pytest>=7.4.0          # Testing framework
+# mypy>=1.0.0            # Type checking

@@ -1,0 +1,134 @@
+# SPON Allocation Configurations
+# Layer indices scaled for different model sizes:
+#   - LLaMA-3.2-1B: 16 layers (0-15)
+#   - LLaMA-3.2-3B: 28 layers (0-27)
+#   - LLaMA-3.1-8B: 32 layers (0-31)
+
+defaults:
+  sparsity_levels: [0.5, 0.6]
+  calibration_dataset: "wikitext"
+  calibration_subset: "wikitext-2-raw-v1"
+  block_size: 128
+  batch_size: 8
+  epochs: 10
+  learning_rate: 1.0e-5
+
+# Model-specific layer mappings
+models:
+  llama-3.2-1b:
+    num_layers: 16
+    hidden_dim: 2048
+    intermediate_dim: 8192
+    
+  llama-3.2-3b:
+    num_layers: 28
+    hidden_dim: 3072
+    intermediate_dim: 8192
+    
+  llama-3.1-8b:
+    num_layers: 32
+    hidden_dim: 4096
+    intermediate_dim: 14336
+
+# Allocation configurations
+# All layer indices are 0-indexed; use layer_fraction for model-agnostic configs
+configurations:
+  # Baselines
+  BASELINE-TEAL:
+    description: "TEAL-only, no SPON biases"
+    layer_fraction: 0.0
+    modules: []
+    relative_params: 0.0
+
+  UNIF-ALL:
+    description: "Paper baseline: all layers, MLP down_proj only"
+    layer_fraction: 1.0
+    layer_selection: "all"
+    modules: ["down_proj"]
+    relative_params: 1.0
+
+  # Layer-wise allocation experiments
+  TOP-25:
+    description: "Top 25% of layers only (early layers)"
+    layer_fraction: 0.25
+    layer_selection: "top"
+    modules: ["down_proj"]
+    relative_params: 0.25
+
+  TOP-50:
+    description: "Top 50% of layers only"
+    layer_fraction: 0.50
+    layer_selection: "top"
+    modules: ["down_proj"]
+    relative_params: 0.50
+
+  TOP-75:
+    description: "Top 75% of layers only"
+    layer_fraction: 0.75
+    layer_selection: "top"
+    modules: ["down_proj"]
+    relative_params: 0.75
+
+  BOTTOM-50:
+    description: "Bottom 50% of layers (control experiment)"
+    layer_fraction: 0.50
+    layer_selection: "bottom"
+    modules: ["down_proj"]
+    relative_params: 0.50
+
+  # Module-wise experiments
+  ATTN-ONLY:
+    description: "Attention O-projection only, all layers"
+    layer_fraction: 1.0
+    layer_selection: "all"
+    modules: ["o_proj"]
+    relative_params: 0.5
+
+  HYBRID-OD:
+    description: "O-proj + down-proj on all layers"
+    layer_fraction: 1.0
+    layer_selection: "all"
+    modules: ["o_proj", "down_proj"]
+    relative_params: 1.5
+
+  HYBRID-QD:
+    description: "Q-proj + down-proj on all layers"
+    layer_fraction: 1.0
+    layer_selection: "all"
+    modules: ["q_proj", "down_proj"]
+    relative_params: 1.5
+
+  # Adaptive allocation (top 75% layers only)
+  ADAPTIVE:
+    description: "SPON on top 75% of layers (early and middle layers)"
+    layer_fraction: 0.75
+    layer_selection: "top"
+    modules: ["down_proj"]
+    relative_params: 0.75
+
+  # Data-driven allocation (requires pre-computation)
+  CRITICAL-ONLY:
+    description: "Only layers with above-median sensitivity"
+    layer_fraction: null  # Determined by sensitivity analysis
+    layer_selection: "data_driven"
+    selection_method: "sensitivity_median"
+    modules: ["down_proj"]
+    relative_params: null
+
+  SHAPLEY-GUIDED:
+    description: "Layers selected by Shapley value importance"
+    layer_fraction: null
+    layer_selection: "data_driven"
+    selection_method: "shapley_top_k"
+    shapley_k: 0.5  # Top 50% by Shapley value
+    modules: ["down_proj"]
+    relative_params: null
+
+  CORNERSTONE:
+    description: "Only cornerstone layers (>50% PPL degradation on removal)"
+    layer_fraction: null
+    layer_selection: "data_driven"
+    selection_method: "cornerstone"
+    cornerstone_threshold: 0.5
+    modules: ["down_proj"]
+    relative_params: null
