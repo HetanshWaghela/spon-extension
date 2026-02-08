@@ -376,7 +376,7 @@ def create_calibration_dataloader(
     batch_size: int = 8,
     num_samples: int = 1024,
     dataset_name: str = "wikitext",
-    dataset_subset: str = "wikitext-2-raw-v1",
+    dataset_subset: str = "wikitext-103-raw-v1",
     split: str = "train",
     shuffle: bool = True,
     seed: int = 42

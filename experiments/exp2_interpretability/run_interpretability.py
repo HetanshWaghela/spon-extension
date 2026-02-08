@@ -98,7 +98,13 @@ def parse_args():
         "--spon_checkpoint", 
         type=str, 
         required=True,
-        help="Path to trained SPON checkpoint"
+        help="Path to trained SPON checkpoint (primary)"
+    )
+    parser.add_argument(
+        "--spon_checkpoint_b",
+        type=str,
+        default=None,
+        help="Path to a second SPON checkpoint for cross-config comparison"
     )
     parser.add_argument(
         "--sparsity", 
@@ -443,19 +449,139 @@ def main():
             "std": float(np.std(bias_np)),
             "l2_norm": float(np.linalg.norm(bias_np)),
             "max_abs": float(np.max(np.abs(bias_np))),
-            "sparsity": float(np.mean(np.abs(bias_np) < 1e-6))
+            "sparsity": float(np.mean(np.abs(bias_np) < 1e-6)),
+            "pos_frac": float(np.mean(bias_np > 0)),
+            "kurtosis": float(
+                np.mean((bias_np - np.mean(bias_np))**4) / (np.std(bias_np)**4 + 1e-12) - 3
+            ),
         }
     
     logger.info("Bias statistics:")
     for key, stats in bias_stats.items():
         logger.info(f"  {key}: norm={stats['l2_norm']:.4f}, std={stats['std']:.4f}")
     
+    # Analysis 4: Hidden-state shift quantification (replicates paper Fig 3)
+    # Measures how much TEAL-only shifts representations vs Dense,
+    # and how SPON recovers from that shift.
+    logger.info("\n=== Analysis 4: Hidden-State Shift Quantification ===")
+    from src.sparse_forward import register_sparsification_hooks, remove_hooks as _remove_hooks
+
+    shift_prompts = sum(list(PROMPT_CATEGORIES.values())[:3], [])  # use first 3 categories
+    shift_prompts = shift_prompts[:15]  # cap at 15 prompts for speed
+
+    # 4a. Dense hidden states
+    dense_hs = collect_hidden_states(
+        model, tokenizer, shift_prompts, device,
+        module_names=target_modules, layer_indices=layer_indices,
+    )
+
+    # 4b. TEAL-only hidden states (sparse, NO SPON)
+    teal_hooks = register_sparsification_hooks(
+        model, args.sparsity, target_modules, spon_biases=None
+    )
+    teal_hs = collect_hidden_states(
+        model, tokenizer, shift_prompts, device,
+        module_names=target_modules, layer_indices=layer_indices,
+    )
+    _remove_hooks(teal_hooks)
+
+    # 4c. SPON hidden states (sparse + SPON biases)
+    spon_hooks = register_sparsification_hooks(
+        model, args.sparsity, target_modules, spon_biases=spon_biases
+    )
+    spon_hs = collect_hidden_states(
+        model, tokenizer, shift_prompts, device,
+        module_names=target_modules, layer_indices=layer_indices,
+    )
+    _remove_hooks(spon_hooks)
+
+    shift_results = {}
+    for key in sorted(dense_hs.keys()):
+        if key not in teal_hs or key not in spon_hs:
+            continue
+        d, t, s = dense_hs[key], teal_hs[key], spon_hs[key]
+        if not all(isinstance(x, torch.Tensor) for x in (d, t, s)):
+            continue
+        teal_shift = torch.norm(d - t, p=2, dim=-1).mean().item()
+        spon_shift = torch.norm(d - s, p=2, dim=-1).mean().item()
+        recovery = ((teal_shift - spon_shift) / (teal_shift + 1e-8)) * 100
+        shift_results[key] = {
+            "teal_shift_l2": round(teal_shift, 4),
+            "spon_shift_l2": round(spon_shift, 4),
+            "recovery_pct": round(recovery, 2),
+        }
+        logger.info(
+            f"  {key}: TEAL shift={teal_shift:.4f}, SPON shift={spon_shift:.4f}, "
+            f"recovery={recovery:.1f}%"
+        )
+
+    # Aggregate shift recovery
+    if shift_results:
+        avg_teal = np.mean([v["teal_shift_l2"] for v in shift_results.values()])
+        avg_spon = np.mean([v["spon_shift_l2"] for v in shift_results.values()])
+        avg_recovery = np.mean([v["recovery_pct"] for v in shift_results.values()])
+        logger.info(
+            f"  ** Avg across layers: TEAL={avg_teal:.4f}, SPON={avg_spon:.4f}, "
+            f"recovery={avg_recovery:.1f}%"
+        )
+        shift_results["_aggregate"] = {
+            "avg_teal_shift": round(float(avg_teal), 4),
+            "avg_spon_shift": round(float(avg_spon), 4),
+            "avg_recovery_pct": round(float(avg_recovery), 2),
+        }
+
+    # Analysis 5: Layer-wise bias norm ranking (which layers need SPON most?)
+    logger.info("\n=== Analysis 5: Layer-wise Bias Norm Ranking ===")
+    layer_norms = []
+    for key, bias in spon_biases.items():
+        layer_norms.append((key, float(torch.norm(bias, p=2).item())))
+    layer_norms.sort(key=lambda x: x[1], reverse=True)
+    logger.info("Layers ranked by SPON bias L2 norm (most → least correction):")
+    for rank, (key, norm) in enumerate(layer_norms, 1):
+        logger.info(f"  #{rank}: {key}  norm={norm:.4f}")
+    bias_norm_ranking = [{"layer": k, "l2_norm": n} for k, n in layer_norms]
+
+    # Analysis 6: Cross-config comparison (if second checkpoint provided)
+    cross_config_results = {}
+    if args.spon_checkpoint_b:
+        logger.info("\n=== Analysis 6: Cross-Config SPON Bias Comparison ===")
+        ckpt_b = torch.load(args.spon_checkpoint_b, map_location=device, weights_only=True)
+        biases_b = {k: v.to(device) for k, v in ckpt_b["biases"].items()}
+        extra_b = ckpt_b.get("extra", {})
+        config_b_name = extra_b.get("config_name", Path(args.spon_checkpoint_b).stem)
+
+        shared_keys = sorted(set(spon_biases.keys()) & set(biases_b.keys()))
+        for key in shared_keys:
+            a_flat = spon_biases[key].float().flatten()
+            b_flat = biases_b[key].float().flatten()
+            cos = float(torch.nn.functional.cosine_similarity(
+                a_flat.unsqueeze(0), b_flat.unsqueeze(0)
+            ).item())
+            l2_diff = float(torch.norm(a_flat - b_flat, p=2).item())
+            cross_config_results[key] = {
+                "cosine_similarity": round(cos, 4),
+                "l2_difference": round(l2_diff, 4),
+            }
+            logger.info(f"  {key}: cos_sim={cos:.4f}, l2_diff={l2_diff:.4f}")
+
+        if cross_config_results:
+            avg_cos = np.mean([v["cosine_similarity"] for v in cross_config_results.values()])
+            logger.info(f"  ** Avg cosine similarity across shared layers: {avg_cos:.4f}")
+            cross_config_results["_aggregate"] = {
+                "avg_cosine_similarity": round(float(avg_cos), 4),
+                "config_a": Path(args.spon_checkpoint).stem,
+                "config_b": config_b_name,
+            }
+
     # Save results
     results = {
         "args": vars(args),
         "pca_alignments": pca_alignments,
         "category_analysis": category_results,
         "bias_statistics": bias_stats,
+        "hidden_state_shifts": shift_results,
+        "bias_norm_ranking": bias_norm_ranking,
+        "cross_config_comparison": cross_config_results,
         "timestamp": timestamp
     }
     

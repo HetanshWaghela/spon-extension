@@ -123,7 +123,19 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate")
     parser.add_argument("--block_size", type=int, default=128, help="Sequence length")
-    parser.add_argument("--num_samples", type=int, default=1024, help="Calibration samples")
+    parser.add_argument("--num_samples", type=int, default=2048, help="Calibration samples")
+    parser.add_argument(
+        "--num_eval_samples",
+        type=int,
+        default=0,
+        help="Evaluation samples (0 = use num_samples // 4, -1 = full test set)"
+    )
+    parser.add_argument(
+        "--dataset_subset",
+        type=str,
+        default="wikitext-103-raw-v1",
+        help="Dataset subset for calibration/eval (wikitext-103-raw-v1 matches paper)"
+    )
     
     # Output settings
     parser.add_argument(
@@ -588,17 +600,27 @@ def main():
         block_size=args.block_size,
         batch_size=args.batch_size,
         num_samples=args.num_samples,
+        dataset_subset=args.dataset_subset,
         split="train",
         # Keep ordering fixed for fair config-to-config comparisons.
         shuffle=False,
         seed=args.seed
     )
     
+    # Determine eval samples: 0 -> num_samples//4, -1 -> large (full test set)
+    if args.num_eval_samples == -1:
+        eval_num_samples = 100000  # effectively the full test set
+    elif args.num_eval_samples > 0:
+        eval_num_samples = args.num_eval_samples
+    else:
+        eval_num_samples = args.num_samples // 4
+    
     eval_dataloader = create_calibration_dataloader(
         tokenizer,
         block_size=args.block_size,
         batch_size=args.batch_size,
-        num_samples=args.num_samples // 4,
+        num_samples=eval_num_samples,
+        dataset_subset=args.dataset_subset,
         split="test",
         shuffle=False,
         seed=args.seed

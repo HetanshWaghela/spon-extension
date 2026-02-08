@@ -15,11 +15,11 @@ training:
   
   # Calibration data
   calibration_dataset: "wikitext"
-  calibration_subset: "wikitext-2-raw-v1"
+  calibration_subset: "wikitext-103-raw-v1"
   calibration_split: "train"
   eval_split: "test"
   block_size: 128
-  num_calibration_samples: 1024
+  num_calibration_samples: 2048
   
   # KL divergence settings
   kl_temperature: 1.0
@@ -47,17 +47,17 @@ evaluation:
 
 sparsity:
   method: "teal"  # magnitude-based thresholding
-  levels: [0.5, 0.6, 0.7]
+  levels: [0.5, 0.6]
   apply_to: ["mlp"]  # Following TEAL, sparsify MLP activations
 
 hardware:
-  # Expected hardware
-  gpus: 4
-  gpu_type: "A6000"
+  # Expected hardware (Colab T4 / A100)
+  gpus: 1
+  gpu_type: "T4"
   mixed_precision: "bf16"
   
   # Memory optimization
-  gradient_checkpointing: true
+  gradient_checkpointing: false
   cpu_offload: false
 
 logging:
