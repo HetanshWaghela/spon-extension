@@ -11,10 +11,10 @@ This repository extends the SPON paper by Xu, Gao, Weng & Ma with two new experi
 
 | Finding | Result |
 |---------|--------|
-| **Attention `o_proj` recovers 3-4× more damage than MLP `down_proj`** | 77-80% vs 23% damage recovered |
+| **Attention `o_proj` recovers 3-4× more damage than MLP `down_proj`** (module-isolated) | 77-80% vs 23% damage recovered |
 | **Top-50% of layers capture 85% of the benefit** | Pareto-optimal at half the parameter cost |
-| **SPON biases diverge from dense at intermediate layers** | Yet improve final output — distributed correction, not local repair |
 | **Different training configs converge to the same biases** | 0.943 avg cosine similarity across shared layers |
+| **Module-isolated SPON shows different intermediate dynamics than uniform** | Divergence increases at module level, yet output improves |
 
 See **[FINDINGS.md](FINDINGS.md)** for the full writeup with plots.
 
@@ -85,14 +85,14 @@ python generate_figures.py
 
 ### Experiment 1: Optimal SPON Allocation
 
-> *Can we achieve equivalent PPL improvement with fewer SPON parameters, and are there better injection sites than `down_proj`?*
+> *Can we achieve equivalent PPL improvement with fewer SPON parameters, and how do individual module types respond to isolated sparsification + SPON?*
 
-We test 6 allocation strategies at 2 sparsity levels:
+Unlike the original paper (which sparsifies the whole model uniformly), we sparsify and inject SPON on **individual module types in isolation**. We test 6 allocation strategies at 2 sparsity levels:
 
 | Config | Description | Relative Params |
 |--------|-------------|----------------|
 | `BASELINE-TEAL` | No SPON (sparsification only — control) | 0× |
-| `UNIF-ALL` | SPON on all layers `down_proj` (paper baseline) | 1.0× |
+| `UNIF-ALL` | SPON on all layers `down_proj` | 1.0× |
 | `TOP-50` | SPON on first 50% of layers | 0.5× |
 | `TOP-75` | SPON on first 75% of layers | 0.75× |
 | `BOTTOM-50` | SPON on last 50% of layers (control) | 0.5× |
@@ -130,7 +130,7 @@ Six analyses:
 
 ![Damage Recovery](figures/fig2_damage_recovery.png)
 
-SPON on attention `o_proj` recovers **77-80%** of sparsification damage. SPON on MLP `down_proj` recovers only **23%**.
+When sparsifying individual module types in isolation, SPON on attention `o_proj` recovers **77-80%** of sparsification damage, versus only **23%** for MLP `down_proj`. (The original paper tests these modules only in combination under uniform sparsification.)
 
 ### Pareto Frontier
 
@@ -138,11 +138,11 @@ SPON on attention `o_proj` recovers **77-80%** of sparsification damage. SPON on
 
 TOP-50 achieves 85% of full-allocation improvement with 50% of parameters.
 
-### Hidden-State Shift Paradox
+### Hidden-State Shift Under Module-Isolated Sparsification
 
 ![Hidden State Shift](figures/fig5_hidden_state_shift.png)
 
-SPON makes intermediate hidden states *more* different from the dense model (negative recovery), yet improves final output. This reveals an end-to-end distributed correction strategy.
+Under our module-isolated setup, SPON increases intermediate divergence at `down_proj` outputs while improving final perplexity. This contrasts with the original paper's finding that SPON reduces divergence under uniform sparsification — suggesting the correction strategy depends on whether damage is localized or distributed.
 
 ---
 

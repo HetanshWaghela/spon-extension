@@ -59,9 +59,9 @@ All MLP-based configs (UNIF-ALL, TOP-50, TOP-75, BOTTOM-50) sparsify `down_proj`
 | BOTTOM-50 | 8 | 16,384 | 23.62 | -1.31% | +9.1% |
 | ATTN-ONLY | 16 | 32,768 | 21.89 | -3.73% | +1.1% |
 
-### Key Finding 1: Attention o_proj benefits substantially more from SPON than MLP down_proj
+### Key Finding 1: Attention o_proj benefits substantially more from SPON than MLP down_proj when sparsified in isolation
 
-The original SPON paper focuses exclusively on MLP `down_proj` as the sparsification and SPON injection site. We tested `o_proj` (the output projection of attention) and found it responds much more strongly to SPON correction.
+The original SPON paper tests `o_proj` in combination with other modules (e.g., "O & down", "Attn", "All" in Figure 4) under uniform whole-model sparsification, concluding that `down_proj` alone is the most efficient injection site. Our experiment takes a different approach: we sparsify and inject SPON on **individual module types in isolation**. Under this setup, `o_proj` responds much more strongly to SPON correction than `down_proj`.
 
 ![Damage Recovery Comparison](figures/fig2_damage_recovery.png)
 
@@ -186,15 +186,15 @@ This analysis replicates the spirit of Figure 3 from the SPON paper. We measured
 | layer_7 | 0.256 | 0.266 | -3.8% |
 | **Average** | **0.173** | **0.183** | **-10.7%** |
 
-### Key Finding 5: SPON improves outputs by perturbing intermediate representations, not by restoring them
+### Key Finding 5: Under module-isolated sparsification, SPON increases intermediate divergence while improving output
 
-The negative recovery percentages across all layers reveal that SPON biases make intermediate hidden states more different from the dense model, not less. Despite this, SPON substantially improves the final output perplexity (as shown in Experiment 1).
+The negative recovery percentages across all layers reveal that, in our module-isolated setup, SPON biases make intermediate hidden states at each `down_proj` output more different from the dense model, not less. Despite this, SPON substantially improves the final output perplexity (as shown in Experiment 1).
 
-This apparent paradox is resolved by the training objective. SPON biases are optimized via KL divergence on the model's final logit distribution — there is no intermediate representation matching loss. The biases are therefore free to reroute information through the sparse network in whatever way minimizes output-level discrepancy, even if that means individual layers diverge further from their dense counterparts.
+**Important caveat:** The original SPON paper (Figure 3, Section 3.4) reports the opposite effect under uniform whole-model sparsification — SPON *reduces* the L2 shift between sparse and dense hidden states. The difference likely stems from our experimental design: we sparsify only `down_proj` and measure shifts at those module outputs, whereas the paper sparsifies all modules and measures aggregate hidden-state shifts. When SPON operates on a single module type in a network where other modules remain dense, the biases may adopt a different correction strategy than when compensating for uniform damage.
 
-This finding has implications for interpreting SPON: the biases should not be understood as layer-local damage repair. Instead, they implement a distributed, end-to-end correction strategy where each layer's bias coordinates with the others to optimize the final prediction. This is consistent with growing evidence in mechanistic interpretability that individual layer representations can be misleading when analyzed in isolation (cf. logit lens limitations).
+Under our setup, the results suggest that the biases are optimized for output-level fidelity (KL divergence on final logits) rather than intermediate representation fidelity. The biases are free to reroute information through the sparse network in whatever way minimizes output-level discrepancy, even if individual module outputs diverge further from their dense counterparts.
 
-The negative recovery is most pronounced in early layers (-40.5% at layer 0) and attenuates with depth (-2.4% at layer 6), suggesting that early-layer biases introduce the largest deliberate perturbations which are then refined by later layers.
+The negative recovery is most pronounced in early layers (-40.5% at layer 0) and attenuates with depth (-2.4% at layer 6), suggesting that early-layer biases introduce the largest perturbations which are then refined by later layers.
 
 ### Analysis 5: Layer-wise Bias Norm Ranking
 
@@ -241,7 +241,7 @@ The similarity decreases with depth (0.973 at layer 0 to 0.886 at layer 7). This
 
 ## Summary of Findings
 
-1. **Attention o_proj is a more effective SPON injection site than MLP down_proj.** SPON on o_proj recovers 77-80% of sparsification damage versus 23% for down_proj. This module was not explored in the original paper.
+1. **Attention o_proj is a more effective SPON injection site than MLP down_proj when sparsified in isolation.** SPON on o_proj recovers 77-80% of sparsification damage versus 23% for down_proj. The original paper tests o_proj only in combination with other modules under uniform sparsification; our module-isolated setup reveals a much larger differential.
 
 2. **Early layers benefit more from SPON than later layers.** TOP-50 outperforms BOTTOM-50 by 1.4-1.5x across sparsity levels.
 
@@ -249,7 +249,7 @@ The similarity decreases with depth (0.973 at layer 0 to 0.886 at layer 7). This
 
 4. **SPON effectiveness increases with sparsity level.** All configurations show larger relative improvements at 60% than 50%.
 
-5. **SPON optimizes output fidelity, not intermediate representation fidelity.** Intermediate hidden states actually diverge further from dense under SPON, while final perplexity improves. This reveals a distributed, end-to-end correction mechanism.
+5. **Under module-isolated sparsification, SPON increases intermediate divergence while improving output.** This contrasts with the original paper's finding under uniform sparsification (where SPON reduces divergence), suggesting the correction strategy depends on whether damage is localized or distributed.
 
 6. **SPON corrections are convergent across training configurations.** Different allocation strategies discover similar bias vectors for shared layers (cosine similarity 0.943), suggesting the corrections capture intrinsic properties of sparsification damage.
 
