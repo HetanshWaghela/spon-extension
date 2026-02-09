@@ -50,6 +50,8 @@ python test_setup.py --skip-model # skip model download
 
 ### 3. Run Experiments
 
+**One-click Colab notebook:** [`spon_extension_v2.ipynb`](spon_extension_v2.ipynb) runs both experiments end-to-end on a Colab A100 and downloads the results.
+
 **Experiment 1 — Allocation Sweep** (trains 12 configs, ~30 min on A100):
 ```bash
 python experiments/exp1_allocation/run_allocation_sweep.py \
@@ -171,7 +173,7 @@ spon-extensions/
 │   ├── allocation_sweep/            # Exp1 results (JSON, CSV, LaTeX, checkpoints)
 │   └── interpretability/            # Exp2 results (JSON)
 ├── figures/                         # Generated plots (7 figures)
-├── notebooks/                       # Interactive Jupyter demos
+├── spon_extension_v2.ipynb          # Colab notebook to reproduce all experiments
 ├── generate_figures.py              # Regenerate all plots from results
 ├── FINDINGS.md                      # Complete experimental findings with figures
 ├── test_setup.py                    # Environment verification
