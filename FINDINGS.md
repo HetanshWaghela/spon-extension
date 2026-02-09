@@ -2,7 +2,7 @@
 
 Hetansh Waghela | February 2026
 
-Independent reproduction and extension of "Spontaneous Neurons" (Xu et al., arXiv:2512.12744v1).
+Independent reproduction and extension of "Resting Neurons, Active Insights" (Xu et al., arXiv:2512.12744v1).
 
 ---
 
@@ -271,4 +271,4 @@ The A100 run completed in approximately 37 minutes total.
 
 ## References
 
-- Xu, H., Gao, T., Weng, T.-W., Ma, T. (2025). Spontaneous Neurons: Lightweight and Efficient Compensation for Activation Sparsification. arXiv:2512.12744v1.
+- Xu, H., Gao, T., Weng, T.-W., Ma, T. (2025). Resting Neurons, Active Insights: Improving Input Sparsification for Large Language Models. arXiv:2512.12744v1.

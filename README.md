@@ -1,9 +1,9 @@
 # SPON Extensions
 
-> **Extending "Spontaneous Neurons" (arXiv:2512.12744v1) — Layer-Wise Allocation & Mechanistic Interpretability**
+> **Extending "Resting Neurons, Active Insights" (arXiv:2512.12744v1) — Layer-Wise Allocation & Mechanistic Interpretability**
 
 [![Paper](https://img.shields.io/badge/arXiv-2512.12744-b31b1b.svg)](https://arxiv.org/abs/2512.12744)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This repository extends the SPON paper by Xu, Gao, Weng & Ma with two new experiments that investigate **where to place SPON biases** and **what those biases encode mechanistically**. All experiments are fully reproducible on a single A100 GPU (~37 minutes).
 
@@ -253,7 +253,7 @@ If you use this code, please cite the original SPON paper:
          for Large Language Models},
   author={Xu, Haotian and Gao, Tian and Weng, Tsui-Wei and Ma, Tengfei},
   journal={arXiv preprint arXiv:2512.12744},
-  year={2024}
+  year={2025}
 }
 ```
 
@@ -265,4 +265,4 @@ If you use this code, please cite the original SPON paper:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache 2.0 — see [LICENSE](LICENSE).
