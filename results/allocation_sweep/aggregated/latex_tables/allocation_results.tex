@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\caption{SPON Allocation Results: Perplexity and Parameter Efficiency}
+\label{tab:allocation_results}
+\begin{tabular}{lllll}
+\toprule
+Config Name & Sparsity & Perplexity & Relative Params & Ppl Improvement \\
+\midrule
+BASELINE-TEAL & 0.500 & 22.60 & 0.00 & 0.000 \\
+UNIF-ALL & 0.500 & 22.38 & 1.00 & 0.967 \\
+TOP-50 & 0.500 & 22.42 & 0.50 & 0.821 \\
+TOP-75 & 0.500 & 22.41 & 0.75 & 0.845 \\
+BOTTOM-50 & 0.500 & 22.47 & 0.50 & 0.589 \\
+ATTN-ONLY & 0.500 & 21.75 & 1.00 & 2.010 \\
+BASELINE-TEAL & 0.600 & 23.93 & 0.00 & 0.000 \\
+UNIF-ALL & 0.600 & 23.40 & 1.00 & 2.226 \\
+TOP-50 & 0.600 & 23.44 & 0.50 & 2.022 \\
+TOP-75 & 0.600 & 23.46 & 0.75 & 1.949 \\
+BOTTOM-50 & 0.600 & 23.62 & 0.50 & 1.308 \\
+ATTN-ONLY & 0.600 & 21.89 & 1.00 & 3.730 \\
+\bottomrule
+\end{tabular}
+\end{table}

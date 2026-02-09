@@ -1,0 +1,32 @@
+[
+  {
+    "config_name": "BASELINE-TEAL",
+    "sparsity": 0.5,
+    "perplexity": 22.600842960603885,
+    "relative_params": 0.0
+  },
+  {
+    "config_name": "TOP-50",
+    "sparsity": 0.5,
+    "perplexity": 22.415307465991553,
+    "relative_params": 0.5
+  },
+  {
+    "config_name": "TOP-75",
+    "sparsity": 0.5,
+    "perplexity": 22.40979256690116,
+    "relative_params": 0.75
+  },
+  {
+    "config_name": "UNIF-ALL",
+    "sparsity": 0.5,
+    "perplexity": 22.382238417458296,
+    "relative_params": 1.0
+  },
+  {
+    "config_name": "ATTN-ONLY",
+    "sparsity": 0.5,
+    "perplexity": 21.74705500845024,
+    "relative_params": 1.0
+  }
+]

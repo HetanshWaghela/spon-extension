@@ -1,0 +1,17 @@
+[
+  {
+    "timestamp": "2026-02-08T06:55:28.211405",
+    "level": "info",
+    "message": "Starting allocation sweep with 6 configs"
+  },
+  {
+    "timestamp": "2026-02-08T06:56:12.730218",
+    "level": "info",
+    "message": "Starting sparsity=0.5"
+  },
+  {
+    "timestamp": "2026-02-08T07:14:22.822178",
+    "level": "info",
+    "message": "Starting sparsity=0.6"
+  }
+]

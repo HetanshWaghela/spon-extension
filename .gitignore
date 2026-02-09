@@ -10,7 +10,7 @@ __pycache__/
 *.so
 
 # Results and Experiments
-results/
+
 experiments/*/outputs/
 experiments/*/checkpoints/
 
@@ -25,3 +25,4 @@ experiments/*/checkpoints/
 # Documentation
 *.md
 !README.md
+!FINDINGS.md

@@ -205,8 +205,8 @@ def compute_pca_alignment(
             )
             continue
         
-        states = states_val.cpu().numpy()
-        bias_np = bias.cpu().numpy()
+        states = states_val.cpu().float().numpy()
+        bias_np = bias.cpu().float().numpy()
         
         # Ensure sufficient samples for PCA
         if states.shape[0] < 2:
@@ -327,8 +327,8 @@ def analyze_category_shifts(
                     logger.warning(f"Skipping L2/CKA for '{key}': expected Tensors but got {type(dense_val).__name__}, {type(sparse_val).__name__}")
                     continue
                 
-                dense = dense_val.cpu().numpy()
-                sparse = sparse_val.cpu().numpy()
+                dense = dense_val.cpu().float().numpy()
+                sparse = sparse_val.cpu().float().numpy()
                 
                 # L2 shift
                 l2 = np.linalg.norm(dense - sparse, axis=-1).mean()
@@ -443,7 +443,7 @@ def main():
     logger.info("\n=== Analysis 3: SPON Bias Statistics ===")
     bias_stats = {}
     for key, bias in spon_biases.items():
-        bias_np = bias.cpu().numpy()
+        bias_np = bias.cpu().float().numpy()
         bias_stats[key] = {
             "mean": float(np.mean(bias_np)),
             "std": float(np.std(bias_np)),
