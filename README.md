@@ -262,7 +262,7 @@ If you use this code, please cite the original SPON paper:
 ## References
 
 - **SPON Paper**: [arXiv:2512.12744](https://arxiv.org/abs/2512.12744)
-- **TEAL**: Training-free Activation Sparsity — [ICLR 2025 Spotlight](https://arxiv.org/abs/2404.15011)
+- **TEAL**: Training-free Activation Sparsity in LLMs — [ICLR 2025 Spotlight](https://arxiv.org/abs/2408.14690)
 - **Prof. Weng's Lab**: [UCSD Trustworthy ML Lab](https://lilywenglab.github.io/)
 
 ## License
